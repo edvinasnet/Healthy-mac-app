@@ -136,3 +136,9 @@ Sources/HealthyMac/
 
 How it works internally: [docs/](docs/README.md): architecture, leftover matching rules, process
 categorisation and killing, privileges and safety, development notes.
+
+## License
+
+Proprietary. Copyright (c) 2026 Edvinas. All rights reserved.
+The source is public for reference only: you may not use, copy, modify or distribute it without
+written permission. See [LICENSE](LICENSE).

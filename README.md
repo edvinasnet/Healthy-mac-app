@@ -8,6 +8,10 @@ Native macOS (SwiftUI) utility:
   Drag any `.app` onto the list. Uncheck the app bundle to just *reset* an app (remove its data only).
 - **Leftover Files** – data of apps that are no longer installed (bundle-id folders with no matching app,
   launch jobs pointing at missing programs). Nothing preselected.
+- **Disk Scan** – one fast pass over your home folder, the whole disk or any folder. Finds
+  regenerable folders (`node_modules`, `.next`, Rust `target`, Gradle/Flutter `build`, `Pods`, `.venv`,
+  DerivedData, npm/pnpm/pip/Homebrew/Gradle caches, AI model stores…) with their age, files of 100 MB or more,
+  and an explorer to drill into folders by size.
 - **Processes** – live list of dev/AI processes, categorised: AI agents (Claude Code, Codex, Aider,
   Ollama, Gemini CLI, MCP servers…), Docker/VMs, Node/JS, Python, anything listening on a TCP port.
   Shows CPU, RAM, ports, uptime and the **project folder** (cwd). Terminate / force kill / kill whole tree.
@@ -127,6 +131,7 @@ Both have shortcut buttons in the app (sidebar banner and Settings ⌘,).
 ```
 Sources/HealthyMac/
   Core/          Shell (process runner + admin prompt), SafetyGuard, FileSize, Permissions
+  DiskScan/      DiskScanner (fts walk, pruned size tree), JunkRules, DiskScanModel
   Uninstaller/   AppScanner, LeftoverFinder, OrphanFinder, Remover, UninstallerModel
   Processes/     ProcessScanner (ps + lsof + libproc), ProcessKiller, DockerClient, models
   Views/         SwiftUI views

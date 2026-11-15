@@ -3,6 +3,7 @@ import SwiftUI
 enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     case apps = "Applications"
     case orphans = "Leftover Files"
+    case disk = "Disk Scan"
     case processes = "Processes"
     case docker = "Docker"
 
@@ -12,6 +13,7 @@ enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .apps: "square.grid.2x2"
         case .orphans: "doc.badge.ellipsis"
+        case .disk: "internaldrive"
         case .processes: "cpu"
         case .docker: "shippingbox"
         }
@@ -22,6 +24,7 @@ struct ContentView: View {
     @Bindable var uninstaller: UninstallerModel
     let processes: ProcessModel
     let docker: DockerModel
+    let disk: DiskScanModel
 
     @State private var selection: SidebarItem? = .apps
     @State private var hasFDA = Permissions.hasFullDiskAccess
@@ -32,6 +35,7 @@ struct ContentView: View {
                 Section("Cleanup") {
                     row(.apps)
                     row(.orphans)
+                    row(.disk)
                 }
                 Section("Activity") {
                     row(.processes)
@@ -57,6 +61,7 @@ struct ContentView: View {
             switch selection ?? .apps {
             case .apps: AppsView(model: uninstaller)
             case .orphans: OrphansView(model: uninstaller)
+            case .disk: DiskScanView(model: disk)
             case .processes: ProcessesView(model: processes)
             case .docker: DockerView(model: docker)
             }

@@ -7,10 +7,11 @@ struct HealthyMacApp: App {
     @State private var uninstaller = UninstallerModel()
     @State private var processes = ProcessModel()
     @State private var docker = DockerModel()
+    @State private var disk = DiskScanModel()
 
     var body: some Scene {
         WindowGroup("HealthyMac") {
-            ContentView(uninstaller: uninstaller, processes: processes, docker: docker)
+            ContentView(uninstaller: uninstaller, processes: processes, docker: docker, disk: disk)
                 .frame(minWidth: 1000, minHeight: 620)
         }
 

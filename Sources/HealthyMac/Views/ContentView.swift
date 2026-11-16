@@ -28,6 +28,7 @@ struct ContentView: View {
 
     @State private var selection: SidebarItem? = .apps
     @State private var hasFDA = Permissions.hasFullDiskAccess
+    @State private var monitor = SelfMonitor()
 
     var body: some View {
         NavigationSplitView {
@@ -55,7 +56,11 @@ struct ContentView: View {
                 .padding(.vertical, 6)
             }
             .safeAreaInset(edge: .bottom) {
-                if !hasFDA { fdaBanner }
+                VStack(spacing: 0) {
+                    if !hasFDA { fdaBanner }
+                    Divider()
+                    SelfUsageFooter(monitor: monitor)
+                }
             }
         } detail: {
             switch selection ?? .apps {

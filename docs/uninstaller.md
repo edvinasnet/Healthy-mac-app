@@ -82,6 +82,16 @@ Two kinds of evidence:
      id, or if Launch Services (`NSWorkspace.urlForApplication(withBundleIdentifier:)`) knows an
      app for it or for any parent id with at least three parts. Launch Services also finds
      apps outside `/Applications`.
+   - **Shared developer data is kept while any app from that developer is installed.** Vendors
+     often share sign-in and settings between their apps (Microsoft's `UBF8T346G9.com.microsoft.oneauth`
+     is used by Outlook, Teams, Office and VS Code). An entry is skipped when:
+     - its group container / script folder carries the code-signing **Team ID** of an installed
+       app (forms `TEAMID.id`, `group.TEAMID.id`, `TEAMID.group.id`);
+     - its vendor prefix (`com.microsoft.`) matches an installed app's bundle id;
+     - one of its first two parts is the **company name** of an installed app's vendor
+       (`jetbrains.ps.253` while `com.jetbrains.PhpStorm` is installed).
+   - Data of built-in macOS features that don't use `com.apple.` is ignored too: Shortcuts
+     (`is.workflow.*`) and printing (`org.cups.*`).
 2. **Broken launch jobs.** Launch agents/daemons whose program path no longer exists.
 
 Results are grouped by identifier and **nothing is ticked**. Command-line tools also write

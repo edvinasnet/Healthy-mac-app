@@ -125,6 +125,15 @@ enum LeftoverFinder {
         "com.example.", "org.python.", "org.nodejs.",
     ]
 
+    /// Developer prefix of a bundle id ("com.microsoft.vscode" → "com.microsoft."),
+    /// nil for short ids and generic prefixes shared by unrelated developers.
+    static func vendorPrefix(of bundleID: String) -> String? {
+        let parts = bundleID.lowercased().split(separator: ".")
+        guard parts.count >= 3 else { return nil }
+        let v = parts.prefix(2).joined(separator: ".") + "."
+        return genericVendors.contains(v) ? nil : v
+    }
+
     static func normalize(_ s: String) -> String {
         s.lowercased().filter { $0.isLetter || $0.isNumber }
     }
@@ -151,14 +160,8 @@ enum LeftoverFinder {
         }
         crash.append(app.name.lowercased())
 
-        var vendor: String?
-        let parts = bid.split(separator: ".")
-        if parts.count >= 3 {
-            let v = parts.prefix(2).joined(separator: ".") + "."
-            if !genericVendors.contains(v) { vendor = v }
-        }
         return Context(
-            bundleID: bid, names: names, crashPrefixes: crash, vendorPrefix: vendor,
+            bundleID: bid, names: names, crashPrefixes: crash, vendorPrefix: vendorPrefix(of: bid),
             teamID: teamIdentifier(for: app.url)?.lowercased(),
             appPath: app.url.standardizedFileURL.path)
     }

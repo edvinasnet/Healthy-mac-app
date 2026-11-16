@@ -16,10 +16,11 @@ enum OrphanFinder {
     private static let ignoredPrefixes = [
         "com.apple.", "apple.", "group.com.apple.", "systemgroup.", "com.crashlytics",
         "org.swift.", "com.google.keystone", "com.microsoft.autoupdate",
+        "is.workflow.",   // Apple Shortcuts
+        "org.cups.",      // macOS printing
     ]
     private static let reverseDNS = try! NSRegularExpression(
         pattern: #"^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9_-]*){2,}$"#, options: [.caseInsensitive])
-    private static let teamPrefix = try! NSRegularExpression(pattern: #"^[a-z0-9]{10}\."#, options: [.caseInsensitive])
     private static let uuidSuffix = try! NSRegularExpression(
         pattern: #"\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"#, options: [.caseInsensitive])
 
@@ -28,6 +29,22 @@ enum OrphanFinder {
         let fm = FileManager.default
         var groups: [String: OrphanGroup] = [:]
         var lsCache: [String: Bool] = [:]
+
+        // Data shared by a developer's apps (sign-in, shared settings) stays while any app from
+        // that developer is installed: same code-signing Team ID or same bundle id vendor prefix.
+        let installedTeams = Set(installed.compactMap { LeftoverFinder.teamIdentifier(for: $0.url)?.lowercased() })
+        let installedVendors = Set(installed.compactMap { LeftoverFinder.vendorPrefix(of: $0.bundleID) })
+        // Company names ("microsoft", "jetbrains"): some apps store data as "jetbrains.x" while
+        // their bundle id is "com.jetbrains.x".
+        let installedCompanies = Set(installedVendors.compactMap { v -> String? in
+            let name = v.split(separator: ".").last.map(String.init) ?? ""
+            return name.count >= 4 ? name : nil
+        })
+        func fromInstalledDeveloper(_ ident: String) -> Bool {
+            if let v = LeftoverFinder.vendorPrefix(of: ident), installedVendors.contains(v) { return true }
+            let parts = ident.split(separator: ".").prefix(2).map(String.init)
+            return parts.contains(where: installedCompanies.contains)
+        }
 
         func isInstalled(_ ident: String) -> Bool {
             if installedIDs.contains(ident) { return true }
@@ -63,12 +80,21 @@ enum OrphanFinder {
                 var ident = LeftoverFinder.strip(entry).lowercased()
                 ident = replace(uuidSuffix, in: ident)
                 if root.kind == "Group Containers" || root.kind == "Scripts" {
-                    ident = replace(teamPrefix, in: ident)
-                    for prefix in ["group.", "groups."] where ident.hasPrefix(prefix) { ident.removeFirst(prefix.count) }
+                    // Forms: TEAMID.id, group.id, group.TEAMID.id, TEAMID.group.id
+                    var sharedByInstalledTeam = false
+                    for _ in 0..<2 {
+                        for prefix in ["group.", "groups."] where ident.hasPrefix(prefix) { ident.removeFirst(prefix.count) }
+                        if let r = ident.range(of: #"^[a-z0-9]{10}\."#, options: .regularExpression) {
+                            if installedTeams.contains(String(ident[r].dropLast())) { sharedByInstalledTeam = true }
+                            ident.removeSubrange(r)
+                        }
+                    }
+                    if sharedByInstalledTeam { continue }
                 }
                 guard matches(reverseDNS, ident),
                       !ignoredPrefixes.contains(where: { ident.hasPrefix($0) }),
-                      !isInstalled(ident)
+                      !isInstalled(ident),
+                      !fromInstalledDeveloper(ident)
                 else { continue }
                 add(root.url.appendingPathComponent(entry), ident: ident, kind: root.kind,
                     reason: "No installed app with this bundle identifier", confidence: .likely)
